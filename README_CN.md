@@ -18,11 +18,13 @@
 
 ## 📺 视频教程
 
-> **在 YouTube 上观看完整教程 — 涵盖安装、配置，以及混合检索的底层原理。**
+> **观看完整教程 — 涵盖安装、配置，以及混合检索的底层原理。**
 
 [![YouTube Video](https://img.shields.io/badge/YouTube-立即观看-red?style=for-the-badge&logo=youtube)](https://youtu.be/MtukF1C8epQ)
-
 🔗 **https://youtu.be/MtukF1C8epQ**
+
+[![Bilibili Video](https://img.shields.io/badge/Bilibili-立即观看-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1zUf2BGEgn/)
+🔗 **https://www.bilibili.com/video/BV1zUf2BGEgn/**
 
 ---
 
