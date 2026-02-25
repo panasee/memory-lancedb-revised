@@ -237,6 +237,28 @@ openclaw gateway restart
 
 > **注意：** 如果之前使用了内置的 `memory-lancedb`，启用本插件时需同时禁用它。同一时间只能有一个 memory 插件处于活动状态。
 
+### 验证是否安装成功（推荐）
+
+1）确认插件已被发现/加载：
+
+```bash
+openclaw plugins list
+openclaw plugins info memory-lancedb-pro
+```
+
+2）如果发现异常，运行插件诊断：
+
+```bash
+openclaw plugins doctor
+```
+
+3）确认 memory slot 已指向本插件：
+
+```bash
+# 期望看到：plugins.slots.memory = "memory-lancedb-pro"
+openclaw config get plugins.slots.memory
+```
+
 ---
 
 ## 配置

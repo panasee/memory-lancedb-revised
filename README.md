@@ -236,6 +236,28 @@ openclaw gateway restart
 
 > **Note:** If you previously used the built-in `memory-lancedb`, disable it when enabling this plugin. Only one memory plugin can be active at a time.
 
+### Verify installation (recommended)
+
+1) Confirm the plugin is discoverable/loaded:
+
+```bash
+openclaw plugins list
+openclaw plugins info memory-lancedb-pro
+```
+
+2) If anything looks wrong, run the built-in diagnostics:
+
+```bash
+openclaw plugins doctor
+```
+
+3) Confirm the memory slot points to this plugin:
+
+```bash
+# Look for: plugins.slots.memory = "memory-lancedb-pro"
+openclaw config get plugins.slots.memory
+```
+
 ---
 
 ## Configuration
