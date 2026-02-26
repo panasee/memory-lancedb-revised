@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- Fix: `memory-pro reembed` no longer crashes (missing `clampInt` helper).
+
 ## 1.0.2
 
 - Fix: pass through `embedding.dimensions` to the OpenAI-compatible `/embeddings` request payload when explicitly configured.
