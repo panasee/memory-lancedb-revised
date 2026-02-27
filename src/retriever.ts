@@ -386,18 +386,22 @@ export class MemoryRetriever {
       // Use the result with more complete data (prefer vector result if both exist)
       const baseResult = vectorResult || bm25Result!;
 
-      // Use vector similarity as the base score.
-      // BM25 hit acts as a bonus (keyword match confirms relevance).
-      const vectorScore = vectorResult ? vectorResult.score : 0;
-      const bm25Hit = bm25Result ? 1 : 0;
+      // Weighted fusion using configured vectorWeight / bm25Weight.
+      // This keeps README/config semantics honest and tunable in production.
+      const vectorWeight = clamp01(this.config.vectorWeight, 0.7);
+      const bm25Weight = clamp01(this.config.bm25Weight, 0.3);
+      const totalWeight = Math.max(vectorWeight + bm25Weight, 1e-6);
+      const normalizedVectorWeight = vectorWeight / totalWeight;
+      const normalizedBm25Weight = bm25Weight / totalWeight;
 
-      // Base = vector score; BM25 hit boosts by up to 15%
-      // BM25-only results use their normalized score (floor 0.5) so exact keyword
-      // matches aren't buried — e.g. searching "JINA_API_KEY" should surface even
-      // when vector distance is large.
-      const fusedScore = vectorResult
-        ? clamp01(vectorScore + (bm25Hit * 0.15 * vectorScore), 0.1)
-        : clamp01(Math.max(bm25Result!.score, 0.5), 0.1);
+      const vectorScore = vectorResult ? vectorResult.score : 0;
+      // Keep BM25-only floor so exact-key matches (e.g. JINA_API_KEY) remain discoverable.
+      const bm25Score = bm25Result ? Math.max(bm25Result.score, 0.5) : 0;
+
+      const fusedScore = clamp01(
+        (vectorScore * normalizedVectorWeight) + (bm25Score * normalizedBm25Weight),
+        0.1,
+      );
 
       fusedResults.push({
         entry: baseResult.entry,

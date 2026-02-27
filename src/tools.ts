@@ -150,6 +150,10 @@ export function registerMemoryStoreTool(api: OpenClawPluginApi, context: ToolCon
         importance: Type.Optional(Type.Number({ description: "Importance score 0-1 (default: 0.7)" })),
         category: Type.Optional(stringEnum(MEMORY_CATEGORIES)),
         scope: Type.Optional(Type.String({ description: "Memory scope (optional, defaults to agent scope)" })),
+        priority: Type.Optional(Type.Union([
+          Type.Literal("critical"),
+          Type.Literal("normal"),
+        ], { description: "Memory priority. critical entries are always force-recalled." })),
       }),
       async execute(_toolCallId, params) {
         const {
@@ -157,11 +161,13 @@ export function registerMemoryStoreTool(api: OpenClawPluginApi, context: ToolCon
           importance = 0.7,
           category = "other",
           scope,
+          priority = "normal",
         } = params as {
           text: string;
           importance?: number;
           category?: string;
           scope?: string;
+          priority?: "critical" | "normal";
         };
 
         try {
@@ -214,6 +220,11 @@ export function registerMemoryStoreTool(api: OpenClawPluginApi, context: ToolCon
             importance: safeImportance,
             category: category as any,
             scope: targetScope,
+            metadata: JSON.stringify({
+              priority,
+              tags: priority === "critical" ? ["critical"] : [],
+              source: "memory_store",
+            }),
           });
 
           return {
@@ -224,6 +235,7 @@ export function registerMemoryStoreTool(api: OpenClawPluginApi, context: ToolCon
               scope: entry.scope,
               category: entry.category,
               importance: entry.importance,
+              priority,
             },
           };
         } catch (error) {

@@ -176,7 +176,7 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "description": "Store session summaries to LanceDB on /new command (replaces built-in session-memory hook)"
           },
           "messageCount": {
@@ -185,6 +185,47 @@
             "maximum": 100,
             "default": 15,
             "description": "Number of recent messages to include in session summary"
+          }
+        }
+      },
+      "staticConstraints": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Pin trusted markdown constraints into every recall context"
+          },
+          "markdownFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Pinned markdown files (absolute or workspace-relative paths)"
+          },
+          "maxChars": {
+            "type": "integer",
+            "minimum": 500,
+            "maximum": 20000,
+            "default": 4000,
+            "description": "Max total chars loaded from pinned markdown files"
+          }
+        }
+      },
+      "criticalRecall": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Always force-include memories tagged as critical"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 3,
+            "description": "Maximum number of critical memories to force include"
           }
         }
       },
@@ -327,6 +368,30 @@
     "sessionMemory.messageCount": {
       "label": "Session Message Count",
       "help": "Number of recent messages to include in session summaries",
+      "advanced": true
+    },
+    "staticConstraints.enabled": {
+      "label": "Pinned Static Constraints",
+      "help": "Always inject trusted markdown constraints before recalled memories"
+    },
+    "staticConstraints.markdownFiles": {
+      "label": "Pinned Markdown Files",
+      "help": "Static policy files injected on each recall turn",
+      "advanced": true
+    },
+    "staticConstraints.maxChars": {
+      "label": "Pinned Context Max Chars",
+      "help": "Maximum chars loaded from pinned markdown files",
+      "advanced": true
+    },
+    "criticalRecall.enabled": {
+      "label": "Critical Memory Recall",
+      "help": "Force include memories tagged with metadata.priority=critical",
+      "advanced": true
+    },
+    "criticalRecall.limit": {
+      "label": "Critical Recall Limit",
+      "help": "Maximum number of critical memories to force include",
       "advanced": true
     },
     "scopes.default": {

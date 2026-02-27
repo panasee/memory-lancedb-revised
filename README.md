@@ -45,6 +45,8 @@ The built-in `memory-lancedb` plugin in OpenClaw provides basic vector search. *
 | Multi-scope isolation | ❌ | ✅ |
 | Noise filtering | ❌ | ✅ |
 | Adaptive retrieval | ❌ | ✅ |
+| Pinned static markdown constraints (Tier-A) | ❌ | ✅ |
+| Critical-memory forced recall (Tier-B) | ❌ | ✅ |
 | Management CLI | ❌ | ✅ |
 | Session memory | ❌ | ✅ |
 | Task-aware embeddings | ❌ | ✅ |
@@ -97,6 +99,14 @@ The built-in `memory-lancedb` plugin in OpenClaw provides basic vector search. *
 
 ## Core Features
 
+### 0. Tiered Memory Architecture (RAG + Markdown Coexistence)
+
+- **Tier-A (Static Constraints)**: pin trusted markdown files into every recall turn via `staticConstraints.markdownFiles`
+- **Tier-B (Critical Recall)**: memories with `metadata.priority=critical` are force-injected before normal recall
+- **Tier-C (Query Expansion)**: risky queries are auto-expanded with policy anchors (e.g. "安全守则", "文件操作规范") before retrieval
+
+This keeps bottom-line safety and operating rules stable while still letting LanceDB handle the dynamic 90% knowledge/history.
+
 ### 1. Hybrid Retrieval
 
 ```
@@ -107,7 +117,7 @@ Query → BM25 FTS ─────┘
 
 - **Vector Search**: Semantic similarity via LanceDB ANN (cosine distance)
 - **BM25 Full-Text Search**: Exact keyword matching via LanceDB FTS index
-- **Fusion Strategy**: Vector score as base, BM25 hits get a 15% boost (tuned beyond traditional RRF)
+- **Fusion Strategy**: Weighted score fusion of vector + BM25 (normalized by `vectorWeight` and `bm25Weight`)
 - **Configurable Weights**: `vectorWeight`, `bm25Weight`, `minScore`
 
 ### 2. Cross-Encoder Reranking
@@ -311,6 +321,18 @@ openclaw config get plugins.slots.memory
   "sessionMemory": {
     "enabled": false,
     "messageCount": 15
+  },
+  "staticConstraints": {
+    "enabled": true,
+    "markdownFiles": [
+      "~/personal/structure.md",
+      "~/personal/safety.md"
+    ],
+    "maxChars": 4000
+  },
+  "criticalRecall": {
+    "enabled": true,
+    "limit": 3
   }
 }
 ```
@@ -436,7 +458,7 @@ When the user sends `/remember <content>`:
 
 | Tool | Description |
 |------|-------------|
-| `memory_store` | Store a memory (supports category, importance, scope) |
+| `memory_store` | Store a memory (supports category, importance, scope, priority=critical/normal) |
 | `memory_recall` | Search memories (hybrid vector + BM25 retrieval) |
 | `memory_forget` | Delete a memory by ID or search query |
 | `memory_update` | Update an existing memory in-place |

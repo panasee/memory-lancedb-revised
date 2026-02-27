@@ -32,6 +32,13 @@ const FORCE_RETRIEVE_PATTERNS = [
   /(你记得|之前|上次|以前|还记得|提到过|说过)/i,
 ];
 
+// Queries likely involving risky operations (filesystem/system/security-sensitive)
+const RISK_PATTERNS = [
+  /\b(rm\s+-rf|delete|remove|wipe|chmod|chown|sudo|shell|bash|script|exec|command|deploy|migration?)\b/i,
+  /\b(file|filesystem|directory|folder|path|权限|文件|目录|删除|覆盖|执行|命令|脚本|部署)\b/i,
+  /\b(secret|token|api\s*key|credential|password|ssh|安全|风险|规范|守则)\b/i,
+];
+
 /**
  * Determine if a query should skip memory retrieval.
  * Returns true if retrieval should be skipped.
@@ -57,4 +64,29 @@ export function shouldSkipRetrieval(query: string): boolean {
 
   // Default: do retrieve
   return false;
+}
+
+export function isRiskRelatedQuery(query: string): boolean {
+  const trimmed = query.trim();
+  return RISK_PATTERNS.some(p => p.test(trimmed));
+}
+
+/**
+ * Query Expansion for risk-sensitive requests.
+ * Adds safety-policy anchors so hybrid retrieval can pull relevant constraints.
+ */
+export function expandQueryForRisk(query: string): string {
+  const trimmed = query.trim();
+  if (!trimmed) return trimmed;
+  if (!isRiskRelatedQuery(trimmed)) return trimmed;
+
+  const anchors = [
+    "安全守则",
+    "文件操作规范",
+    "风险控制",
+    "security policy",
+    "safe file operation",
+  ];
+
+  return `${trimmed}\n\n[policy-hints] ${anchors.join(" ")}`;
 }
