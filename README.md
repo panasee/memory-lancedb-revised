@@ -348,6 +348,7 @@ This plugin works with **any OpenAI-compatible embedding API**:
 | **Jina** (recommended) | `jina-embeddings-v5-text-small` | `https://api.jina.ai/v1` | 1024 |
 | **OpenAI** | `text-embedding-3-small` | `https://api.openai.com/v1` | 1536 |
 | **Google Gemini** | `gemini-embedding-001` | `https://generativelanguage.googleapis.com/v1beta/openai/` | 3072 |
+| **Qwen (third-party / self-hosted)** | e.g. `Qwen/Qwen3-Embedding-*` | your OpenAI-compatible endpoint | _set `embedding.dimensions` explicitly_ |
 | **Ollama** (local) | `nomic-embed-text` | `http://localhost:11434/v1` | _provider-specific_ (set `embedding.dimensions` to match your Ollama model output) |
 
 ### Rerank Providers
@@ -358,6 +359,7 @@ Cross-encoder reranking supports multiple providers via `rerankProvider`:
 |----------|-----------------|----------|---------------|
 | **Jina** (default) | `jina` | `https://api.jina.ai/v1/rerank` | `jina-reranker-v2-base-multilingual` |
 | **SiliconFlow** (free tier available) | `siliconflow` | `https://api.siliconflow.com/v1/rerank` | `BAAI/bge-reranker-v2-m3`, `Qwen/Qwen3-Reranker-8B` |
+| **Qwen-compatible endpoint (third-party/self-hosted)** | `qwen` | your `/v1/rerank` endpoint | e.g. `Qwen/Qwen3-Reranker-*` |
 | **Pinecone** | `pinecone` | `https://api.pinecone.io/rerank` | `bge-reranker-v2-m3` |
 
 <details>
@@ -374,6 +376,31 @@ Cross-encoder reranking supports multiple providers via `rerankProvider`:
   }
 }
 ```
+
+</details>
+
+<details>
+<summary><strong>Qwen Third-Party / Self-Hosted Rerank Example</strong></summary>
+
+```json
+{
+  "embedding": {
+    "apiKey": "${QWEN_EMBED_KEY}",
+    "baseURL": "https://your-qwen-embed.example.com/v1",
+    "model": "Qwen/Qwen3-Embedding-0.6B",
+    "dimensions": 1024
+  },
+  "retrieval": {
+    "rerank": "cross-encoder",
+    "rerankProvider": "qwen",
+    "rerankEndpoint": "https://your-qwen-rerank.example.com/v1/rerank",
+    "rerankApiKey": "${QWEN_RERANK_KEY}",
+    "rerankModel": "Qwen/Qwen3-Reranker-8B"
+  }
+}
+```
+
+> If your self-hosted rerank endpoint has no auth, omit `rerankApiKey` and keep `rerankProvider: "qwen"`.
 
 </details>
 

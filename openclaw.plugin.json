@@ -118,9 +118,9 @@
           },
           "rerankProvider": {
             "type": "string",
-            "enum": ["jina", "siliconflow", "pinecone"],
+            "enum": ["jina", "siliconflow", "qwen", "pinecone"],
             "default": "jina",
-            "description": "Reranker provider format. Determines request/response shape and auth header."
+            "description": "Reranker provider format. Determines request/response shape and auth header. qwen allows no-auth third-party deployments."
           },
           "candidatePoolSize": {
             "type": "integer",
@@ -353,7 +353,7 @@
     },
     "retrieval.rerankProvider": {
       "label": "Reranker Provider",
-      "help": "Provider format: jina (default), siliconflow, or pinecone",
+      "help": "Provider format: jina (default), siliconflow, qwen, or pinecone",
       "advanced": true
     },
     "retrieval.candidatePoolSize": {

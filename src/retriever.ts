@@ -33,8 +33,9 @@ export interface RetrievalConfig {
   /** Reranker provider format. Determines request/response shape and auth header.
    *  - "jina" (default): Authorization: Bearer, string[] documents, results[].relevance_score
    *  - "siliconflow": same format as jina (alias, for clarity)
+   *  - "qwen": qwen-compatible rerank endpoints (usually jina-like payload; auth optional)
    *  - "pinecone": Api-Key header, {text}[] documents, data[].score */
-  rerankProvider?: "jina" | "siliconflow" | "pinecone";
+  rerankProvider?: "jina" | "siliconflow" | "qwen" | "pinecone";
   /**
    * Length normalization: penalize long entries that dominate via sheer keyword
    * density. Formula: score *= 1 / (1 + log2(charLen / anchor)).
@@ -115,14 +116,14 @@ function clamp01(value: number, fallback: number): number {
 // Rerank Provider Adapters
 // ============================================================================
 
-type RerankProvider = "jina" | "siliconflow" | "pinecone";
+type RerankProvider = "jina" | "siliconflow" | "qwen" | "pinecone";
 
 interface RerankItem { index: number; score: number }
 
 /** Build provider-specific request headers and body */
 function buildRerankRequest(
   provider: RerankProvider,
-  apiKey: string,
+  apiKey: string | undefined,
   model: string,
   query: string,
   documents: string[],
@@ -133,7 +134,7 @@ function buildRerankRequest(
       return {
         headers: {
           "Content-Type": "application/json",
-          "Api-Key": apiKey,
+          ...(apiKey ? { "Api-Key": apiKey } : {}),
           "X-Pinecone-API-Version": "2024-10",
         },
         body: {
@@ -144,13 +145,14 @@ function buildRerankRequest(
           rank_fields: ["text"],
         },
       };
+    case "qwen":
     case "siliconflow":
     case "jina":
     default:
       return {
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          ...(apiKey ? { "Authorization": `Bearer ${apiKey}` } : {}),
         },
         body: {
           model,
@@ -174,13 +176,22 @@ function parseRerankResponse(
       if (!Array.isArray(items)) return null;
       return items.map(r => ({ index: r.index, score: r.score }));
     }
+    case "qwen":
     case "siliconflow":
     case "jina":
     default: {
-      // Jina / SiliconFlow: { results: [{ index, relevance_score }] }
-      const items = data.results as Array<{ index: number; relevance_score: number }> | undefined;
-      if (!Array.isArray(items)) return null;
-      return items.map(r => ({ index: r.index, score: r.relevance_score }));
+      // Jina / SiliconFlow / most qwen-compatible APIs:
+      // { results: [{ index, relevance_score|score }] }
+      // Some providers may return { data: [{ index, score }] }
+      const results = data.results as Array<{ index: number; relevance_score?: number; score?: number }> | undefined;
+      if (Array.isArray(results)) {
+        return results.map(r => ({ index: r.index, score: Number(r.relevance_score ?? r.score ?? 0) }));
+      }
+      const rows = data.data as Array<{ index: number; score?: number; relevance_score?: number }> | undefined;
+      if (Array.isArray(rows)) {
+        return rows.map(r => ({ index: r.index, score: Number(r.score ?? r.relevance_score ?? 0) }));
+      }
+      return null;
     }
   }
 }
@@ -428,11 +439,15 @@ export class MemoryRetriever {
     }
 
     // Try cross-encoder rerank via configured provider API
-    if (this.config.rerank === "cross-encoder" && this.config.rerankApiKey) {
+    const provider = this.config.rerankProvider || "jina";
+    const allowNoAuth = provider === "qwen";
+    if (this.config.rerank === "cross-encoder" && (this.config.rerankApiKey || allowNoAuth)) {
       try {
-        const provider = this.config.rerankProvider || "jina";
         const model = this.config.rerankModel || "jina-reranker-v2-base-multilingual";
-        const endpoint = this.config.rerankEndpoint || "https://api.jina.ai/v1/rerank";
+        const endpoint = this.config.rerankEndpoint || (provider === "qwen" ? "" : "https://api.jina.ai/v1/rerank");
+        if (!endpoint) {
+          throw new Error("rerankEndpoint is required when rerankProvider=qwen");
+        }
         const documents = results.map(r => r.entry.text);
 
         // Build provider-specific request
