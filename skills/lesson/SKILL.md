@@ -26,3 +26,11 @@ When triggered, extract and store lessons from the **recent conversation context
 - Keep entries short and atomic (< 500 chars each)
 - If the lesson also affects a checklist or SKILL.md, update those files too
 - If no clear lesson is found in recent context, ask Master what to store
+
+## Environment pitfalls checklist
+
+- Verify command availability before use (e.g., `command -v rg`, `command -v python3`).
+- Prefer portable fallbacks (`grep -R`, `python3`) when optional tools are missing.
+- If direct file-edit tooling fails for non-workspace paths, use a backup + controlled `exec` patch flow.
+- If a restart command returns anomalous wrapper output, verify real service state with `openclaw gateway status` before reporting.
+- For restart/service-changing actions, add a pre-action notification checkpoint when the user requested prior notice.

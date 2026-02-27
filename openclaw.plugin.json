@@ -118,9 +118,14 @@
           },
           "rerankProvider": {
             "type": "string",
-            "enum": ["jina", "siliconflow", "qwen", "pinecone"],
+            "enum": [
+              "jina",
+              "siliconflow",
+              "qwen",
+              "pinecone"
+            ],
             "default": "jina",
-            "description": "Reranker provider format. Determines request/response shape and auth header. qwen allows no-auth third-party deployments."
+            "description": "Reranker provider format. Determines request/response shape and auth header. qwen supports self-hosted third-party endpoints."
           },
           "candidatePoolSize": {
             "type": "integer",
@@ -199,7 +204,9 @@
           },
           "markdownFiles": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Pinned markdown files (absolute or workspace-relative paths)"
           },
           "maxChars": {
@@ -254,6 +261,49 @@
               "type": "array",
               "items": {
                 "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "scenarioConstraints": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable scenario-aware markdown rule loading based on task relevance"
+          },
+          "maxScenarios": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 4,
+            "description": "Maximum number of matched scenarios to load per request"
+          },
+          "scenarios": {
+            "type": "object",
+            "description": "Scenario definitions keyed by name (e.g. coding/research/dialogue)",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "keywords": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "markdownFiles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -444,6 +494,20 @@
     "embedding.normalized": {
       "label": "Normalized Embeddings",
       "help": "Request normalized embeddings when the provider supports it (Jina v5). If unset, the field is not sent.",
+      "advanced": true
+    },
+    "scenarioConstraints.enabled": {
+      "label": "Scenario-aware Rule Loading",
+      "help": "Load additional markdown rule files based on task keywords"
+    },
+    "scenarioConstraints.maxScenarios": {
+      "label": "Max Scenario Matches",
+      "help": "Maximum number of scenario rule groups loaded per request",
+      "advanced": true
+    },
+    "scenarioConstraints.scenarios": {
+      "label": "Scenario Definitions",
+      "help": "Scenario keyword-to-markdown mapping for contextual rule injection",
       "advanced": true
     }
   }

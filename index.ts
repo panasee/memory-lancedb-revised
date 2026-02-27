@@ -48,7 +48,7 @@ interface PluginConfig {
     rerankApiKey?: string;
     rerankModel?: string;
     rerankEndpoint?: string;
-    rerankProvider?: "jina" | "siliconflow" | "pinecone";
+    rerankProvider?: "jina" | "siliconflow" | "qwen" | "pinecone";
     recencyHalfLifeDays?: number;
     recencyWeight?: number;
     filterNoise?: boolean;
@@ -71,6 +71,15 @@ interface PluginConfig {
   criticalRecall?: {
     enabled?: boolean;
     limit?: number;
+  };
+  scenarioConstraints?: {
+    enabled?: boolean;
+    maxScenarios?: number;
+    scenarios?: Record<string, {
+      description?: string;
+      keywords?: string[];
+      markdownFiles?: string[];
+    }>;
   };
 }
 
@@ -197,6 +206,48 @@ function isCriticalMemory(metadata?: string): boolean {
   } catch {
     return false;
   }
+}
+
+interface ScenarioMatchResult {
+  scenarioIds: string[];
+  files: string[];
+}
+
+function selectScenarioConstraintFiles(
+  prompt: string,
+  config?: PluginConfig["scenarioConstraints"],
+): ScenarioMatchResult {
+  if (!config || config.enabled === false || !config.scenarios) {
+    return { scenarioIds: [], files: [] };
+  }
+
+  const lowerPrompt = prompt.toLowerCase();
+  const maxScenarios = Math.max(1, Math.min(10, config.maxScenarios ?? 4));
+
+  const scored = Object.entries(config.scenarios)
+    .map(([id, scenario]) => {
+      const keywords = Array.isArray(scenario.keywords)
+        ? scenario.keywords.map(k => String(k).toLowerCase()).filter(Boolean)
+        : [];
+      const score = keywords.reduce((acc, kw) => acc + (lowerPrompt.includes(kw) ? 1 : 0), 0);
+      const files = Array.isArray(scenario.markdownFiles)
+        ? scenario.markdownFiles.filter(Boolean)
+        : [];
+      return { id, score, files };
+    })
+    .filter(s => s.score > 0 && s.files.length > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const selected = scored.slice(0, maxScenarios);
+  const fileSet = new Set<string>();
+  for (const s of selected) {
+    for (const f of s.files) fileSet.add(f);
+  }
+
+  return {
+    scenarioIds: selected.map(s => s.id),
+    files: Array.from(fileSet),
+  };
 }
 
 async function loadPinnedMarkdownContext(
@@ -433,12 +484,18 @@ const memoryLanceDBProPlugin = {
           const agentId = event.agentId || "main";
           const accessibleScopes = scopeManager.getAccessibleScopes(agentId);
 
-          // Tier-A: pinned static constraints from markdown files
+          // Tier-A: pinned static constraints (global core + scenario-specific markdown rules)
+          const scenarioSelection = selectScenarioConstraintFiles(event.prompt, config.scenarioConstraints);
+          const staticFiles = [
+            ...(config.staticConstraints?.markdownFiles || []),
+            ...scenarioSelection.files,
+          ];
+
           const staticContext = config.staticConstraints?.enabled === false
             ? ""
             : await loadPinnedMarkdownContext(
                 api,
-                config.staticConstraints?.markdownFiles || [],
+                staticFiles,
                 config.staticConstraints?.maxChars || 4000,
               );
 
@@ -489,7 +546,7 @@ const memoryLanceDBProPlugin = {
 
           api.logger.info?.(
             `memory-lancedb-revised: injecting context for agent ${agentId} ` +
-            `(critical=${criticalEntries.length}, recalled=${results.length}, static=${staticContext ? 'yes' : 'no'})`
+            `(critical=${criticalEntries.length}, recalled=${results.length}, static=${staticContext ? 'yes' : 'no'}, scenarios=${scenarioSelection.scenarioIds.join(',') || 'none'})`
           );
 
           return {
@@ -852,6 +909,17 @@ function parsePluginConfig(value: unknown): PluginConfig {
             enabled: (cfg.criticalRecall as Record<string, unknown>).enabled !== false,
             limit: typeof (cfg.criticalRecall as Record<string, unknown>).limit === "number"
               ? (cfg.criticalRecall as Record<string, unknown>).limit as number
+              : undefined,
+          }
+        : undefined,
+      scenarioConstraints: typeof cfg.scenarioConstraints === "object" && cfg.scenarioConstraints !== null
+        ? {
+            enabled: (cfg.scenarioConstraints as Record<string, unknown>).enabled !== false,
+            maxScenarios: typeof (cfg.scenarioConstraints as Record<string, unknown>).maxScenarios === "number"
+              ? (cfg.scenarioConstraints as Record<string, unknown>).maxScenarios as number
+              : undefined,
+            scenarios: typeof (cfg.scenarioConstraints as Record<string, unknown>).scenarios === "object" && (cfg.scenarioConstraints as Record<string, unknown>).scenarios !== null
+              ? ((cfg.scenarioConstraints as Record<string, unknown>).scenarios as Record<string, unknown>) as Record<string, { description?: string; keywords?: string[]; markdownFiles?: string[] }>
               : undefined,
           }
         : undefined,
