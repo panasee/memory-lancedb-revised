@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 memory-lancedb-pro · OpenClaw Plugin
+# 🧠 memory-lancedb-revised · OpenClaw Plugin
 
 **Enhanced Long-Term Memory Plugin for [OpenClaw](https://github.com/openclaw/openclaw)**
 
@@ -30,9 +30,9 @@ Hybrid Retrieval (Vector + BM25) · Cross-Encoder Rerank · Multi-Scope Isolatio
 
 ## Why This Plugin?
 
-The built-in `memory-lancedb` plugin in OpenClaw provides basic vector search. **memory-lancedb-pro** takes it much further:
+The built-in `memory-lancedb` plugin in OpenClaw provides basic vector search. **memory-lancedb-revised** takes it much further:
 
-| Feature | Built-in `memory-lancedb` | **memory-lancedb-pro** |
+| Feature | Built-in `memory-lancedb` | **memory-lancedb-revised** |
 |---------|--------------------------|----------------------|
 | Vector search | ✅ | ✅ |
 | BM25 full-text search | ❌ | ✅ |
@@ -178,7 +178,7 @@ According to the docs, the workspace is the **default cwd**, and **relative path
 
 > Note: OpenClaw configuration typically lives under `~/.openclaw/openclaw.json` (separate from the workspace).
 
-**Common mistake:** cloning the plugin somewhere else, while keeping `plugins.load.paths: ["plugins/memory-lancedb-pro"]` (a **relative path**). In that case OpenClaw will look for `plugins/memory-lancedb-pro` under your **workspace** and fail to load it.
+**Common mistake:** cloning the plugin somewhere else, while keeping `plugins.load.paths: ["plugins/memory-lancedb-revised"]` (a **relative path**). In that case OpenClaw will look for `plugins/memory-lancedb-revised` under your **workspace** and fail to load it.
 
 ### Option A (recommended): clone into `plugins/` under your workspace
 
@@ -188,10 +188,10 @@ According to the docs, the workspace is the **default cwd**, and **relative path
 cd /path/to/your/openclaw/workspace
 
 # 2) Clone the plugin into workspace/plugins/
-git clone https://github.com/win4r/memory-lancedb-pro.git plugins/memory-lancedb-pro
+git clone https://github.com/win4r/memory-lancedb-revised.git plugins/memory-lancedb-revised
 
 # 3) Install dependencies
-cd plugins/memory-lancedb-pro
+cd plugins/memory-lancedb-revised
 npm install
 ```
 
@@ -201,10 +201,10 @@ Then reference it with a relative path in your OpenClaw config:
 {
   "plugins": {
     "load": {
-      "paths": ["plugins/memory-lancedb-pro"]
+      "paths": ["plugins/memory-lancedb-revised"]
     },
     "entries": {
-      "memory-lancedb-pro": {
+      "memory-lancedb-revised": {
         "enabled": true,
         "config": {
           "embedding": {
@@ -220,7 +220,7 @@ Then reference it with a relative path in your OpenClaw config:
       }
     },
     "slots": {
-      "memory": "memory-lancedb-pro"
+      "memory": "memory-lancedb-revised"
     }
   }
 }
@@ -232,7 +232,7 @@ Then reference it with a relative path in your OpenClaw config:
 {
   "plugins": {
     "load": {
-      "paths": ["/absolute/path/to/memory-lancedb-pro"]
+      "paths": ["/absolute/path/to/memory-lancedb-revised"]
     }
   }
 }
@@ -252,7 +252,7 @@ openclaw gateway restart
 
 ```bash
 openclaw plugins list
-openclaw plugins info memory-lancedb-pro
+openclaw plugins info memory-lancedb-revised
 ```
 
 2) If anything looks wrong, run the built-in diagnostics:
@@ -264,7 +264,7 @@ openclaw plugins doctor
 3) Confirm the memory slot points to this plugin:
 
 ```bash
-# Look for: plugins.slots.memory = "memory-lancedb-pro"
+# Look for: plugins.slots.memory = "memory-lancedb-revised"
 openclaw config get plugins.slots.memory
 ```
 
@@ -286,7 +286,7 @@ openclaw config get plugins.slots.memory
     "taskPassage": "retrieval.passage",
     "normalized": true
   },
-  "dbPath": "~/.openclaw/memory/lancedb-pro",
+  "dbPath": "~/.openclaw/memory/lancedb-revised",
   "autoCapture": true,
   "autoRecall": true,
   "retrieval": {
@@ -427,31 +427,31 @@ Cross-encoder reranking supports multiple providers via `rerankProvider`:
 
 ```bash
 # List memories
-openclaw memory-pro list [--scope global] [--category fact] [--limit 20] [--json]
+openclaw memory-revised list [--scope global] [--category fact] [--limit 20] [--json]
 
 # Search memories
-openclaw memory-pro search "query" [--scope global] [--limit 10] [--json]
+openclaw memory-revised search "query" [--scope global] [--limit 10] [--json]
 
 # View statistics
-openclaw memory-pro stats [--scope global] [--json]
+openclaw memory-revised stats [--scope global] [--json]
 
 # Delete a memory by ID (supports 8+ char prefix)
-openclaw memory-pro delete <id>
+openclaw memory-revised delete <id>
 
 # Bulk delete with filters
-openclaw memory-pro delete-bulk --scope global [--before 2025-01-01] [--dry-run]
+openclaw memory-revised delete-bulk --scope global [--before 2025-01-01] [--dry-run]
 
 # Export / Import
-openclaw memory-pro export [--scope global] [--output memories.json]
-openclaw memory-pro import memories.json [--scope global] [--dry-run]
+openclaw memory-revised export [--scope global] [--output memories.json]
+openclaw memory-revised import memories.json [--scope global] [--dry-run]
 
 # Re-embed all entries with a new model
-openclaw memory-pro reembed --source-db /path/to/old-db [--batch-size 32] [--skip-existing]
+openclaw memory-revised reembed --source-db /path/to/old-db [--batch-size 32] [--skip-existing]
 
 # Migrate from built-in memory-lancedb
-openclaw memory-pro migrate check [--source /path]
-openclaw memory-pro migrate run [--source /path] [--dry-run] [--skip-existing]
-openclaw memory-pro migrate verify [--source /path]
+openclaw memory-revised migrate check [--source /path]
+openclaw memory-revised migrate run [--source /path] [--dry-run] [--skip-existing]
+openclaw memory-revised migrate verify [--source /path]
 ```
 
 ---

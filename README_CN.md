@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 memory-lancedb-pro · OpenClaw Plugin
+# 🧠 memory-lancedb-revised · OpenClaw Plugin
 
 **[OpenClaw](https://github.com/openclaw/openclaw) 增强型 LanceDB 长期记忆插件**
 
@@ -30,9 +30,9 @@
 
 ## 为什么需要这个插件？
 
-OpenClaw 内置的 `memory-lancedb` 插件仅提供基本的向量搜索。**memory-lancedb-pro** 在此基础上进行了全面升级：
+OpenClaw 内置的 `memory-lancedb` 插件仅提供基本的向量搜索。**memory-lancedb-revised** 在此基础上进行了全面升级：
 
-| 功能 | 内置 `memory-lancedb` | **memory-lancedb-pro** |
+| 功能 | 内置 `memory-lancedb` | **memory-lancedb-revised** |
 |------|----------------------|----------------------|
 | 向量搜索 | ✅ | ✅ |
 | BM25 全文检索 | ❌ | ✅ |
@@ -169,7 +169,7 @@ Query → BM25 FTS ─────┘
 
 > 说明：OpenClaw 的配置文件通常在 `~/.openclaw/openclaw.json`，与 workspace 是分开的。
 
-**最常见的安装错误：** 把插件 clone 到别的目录，但在配置里仍然写 `"paths": ["plugins/memory-lancedb-pro"]`（这是**相对路径**）。OpenClaw 会去 workspace 下找 `plugins/memory-lancedb-pro`，导致加载失败，于是出现“安装位置不对”的反馈。
+**最常见的安装错误：** 把插件 clone 到别的目录，但在配置里仍然写 `"paths": ["plugins/memory-lancedb-revised"]`（这是**相对路径**）。OpenClaw 会去 workspace 下找 `plugins/memory-lancedb-revised`，导致加载失败，于是出现“安装位置不对”的反馈。
 
 ### 方案 A（推荐）：克隆到 workspace 的 `plugins/` 目录下
 
@@ -179,10 +179,10 @@ Query → BM25 FTS ─────┘
 cd /path/to/your/openclaw/workspace
 
 # 2) 把插件克隆到 workspace/plugins/ 下
-git clone https://github.com/win4r/memory-lancedb-pro.git plugins/memory-lancedb-pro
+git clone https://github.com/win4r/memory-lancedb-revised.git plugins/memory-lancedb-revised
 
 # 3) 安装依赖
-cd plugins/memory-lancedb-pro
+cd plugins/memory-lancedb-revised
 npm install
 ```
 
@@ -192,10 +192,10 @@ npm install
 {
   "plugins": {
     "load": {
-      "paths": ["plugins/memory-lancedb-pro"]
+      "paths": ["plugins/memory-lancedb-revised"]
     },
     "entries": {
-      "memory-lancedb-pro": {
+      "memory-lancedb-revised": {
         "enabled": true,
         "config": {
           "embedding": {
@@ -211,7 +211,7 @@ npm install
       }
     },
     "slots": {
-      "memory": "memory-lancedb-pro"
+      "memory": "memory-lancedb-revised"
     }
   }
 }
@@ -223,7 +223,7 @@ npm install
 {
   "plugins": {
     "load": {
-      "paths": ["/absolute/path/to/memory-lancedb-pro"]
+      "paths": ["/absolute/path/to/memory-lancedb-revised"]
     }
   }
 }
@@ -243,7 +243,7 @@ openclaw gateway restart
 
 ```bash
 openclaw plugins list
-openclaw plugins info memory-lancedb-pro
+openclaw plugins info memory-lancedb-revised
 ```
 
 2）如果发现异常，运行插件诊断：
@@ -255,7 +255,7 @@ openclaw plugins doctor
 3）确认 memory slot 已指向本插件：
 
 ```bash
-# 期望看到：plugins.slots.memory = "memory-lancedb-pro"
+# 期望看到：plugins.slots.memory = "memory-lancedb-revised"
 openclaw config get plugins.slots.memory
 ```
 
@@ -277,7 +277,7 @@ openclaw config get plugins.slots.memory
     "taskPassage": "retrieval.passage",
     "normalized": true
   },
-  "dbPath": "~/.openclaw/memory/lancedb-pro",
+  "dbPath": "~/.openclaw/memory/lancedb-revised",
   "autoCapture": true,
   "autoRecall": true,
   "retrieval": {
@@ -333,31 +333,31 @@ openclaw config get plugins.slots.memory
 
 ```bash
 # 列出记忆
-openclaw memory-pro list [--scope global] [--category fact] [--limit 20] [--json]
+openclaw memory-revised list [--scope global] [--category fact] [--limit 20] [--json]
 
 # 搜索记忆
-openclaw memory-pro search "query" [--scope global] [--limit 10] [--json]
+openclaw memory-revised search "query" [--scope global] [--limit 10] [--json]
 
 # 查看统计
-openclaw memory-pro stats [--scope global] [--json]
+openclaw memory-revised stats [--scope global] [--json]
 
 # 按 ID 删除记忆（支持 8+ 字符前缀）
-openclaw memory-pro delete <id>
+openclaw memory-revised delete <id>
 
 # 批量删除
-openclaw memory-pro delete-bulk --scope global [--before 2025-01-01] [--dry-run]
+openclaw memory-revised delete-bulk --scope global [--before 2025-01-01] [--dry-run]
 
 # 导出 / 导入
-openclaw memory-pro export [--scope global] [--output memories.json]
-openclaw memory-pro import memories.json [--scope global] [--dry-run]
+openclaw memory-revised export [--scope global] [--output memories.json]
+openclaw memory-revised import memories.json [--scope global] [--dry-run]
 
 # 使用新模型重新生成 Embedding
-openclaw memory-pro reembed --source-db /path/to/old-db [--batch-size 32] [--skip-existing]
+openclaw memory-revised reembed --source-db /path/to/old-db [--batch-size 32] [--skip-existing]
 
 # 从内置 memory-lancedb 迁移
-openclaw memory-pro migrate check [--source /path]
-openclaw memory-pro migrate run [--source /path] [--dry-run] [--skip-existing]
-openclaw memory-pro migrate verify [--source /path]
+openclaw memory-revised migrate check [--source /path]
+openclaw memory-revised migrate run [--source /path] [--dry-run] [--skip-existing]
+openclaw memory-revised migrate verify [--source /path]
 ```
 
 ---

@@ -1,5 +1,5 @@
 /**
- * Memory LanceDB Pro Plugin
+ * Memory LanceDB Revised Plugin
  * Enhanced LanceDB-backed long-term memory with hybrid retrieval and multi-scope isolation
  */
 
@@ -80,7 +80,7 @@ interface PluginConfig {
 
 function getDefaultDbPath(): string {
   const home = homedir();
-  return join(home, ".openclaw", "memory", "lancedb-pro");
+  return join(home, ".openclaw", "memory", "lancedb-revised");
 }
 
 function resolveEnvVars(value: string): string {
@@ -220,7 +220,7 @@ async function loadPinnedMarkdownContext(
       chunks.push(`## ${basename(resolved)}\n${cleaned}`);
       remaining -= cleaned.length;
     } catch (err) {
-      api.logger.warn(`memory-lancedb-pro: failed to read static constraint file '${file}': ${String(err)}`);
+      api.logger.warn(`memory-lancedb-revised: failed to read static constraint file '${file}': ${String(err)}`);
     }
   }
 
@@ -344,8 +344,8 @@ function getPluginVersion(): string {
 // ============================================================================
 
 const memoryLanceDBProPlugin = {
-  id: "memory-lancedb-pro",
-  name: "Memory (LanceDB Pro)",
+  id: "memory-lancedb-revised",
+  name: "Memory (LanceDB Revised)",
   description: "Enhanced LanceDB-backed long-term memory with hybrid retrieval, multi-scope isolation, and management CLI",
   kind: "memory" as const,
 
@@ -381,7 +381,7 @@ const memoryLanceDBProPlugin = {
     const pluginVersion = getPluginVersion();
 
     api.logger.info(
-      `memory-lancedb-pro@${pluginVersion}: plugin registered (db: ${resolvedDbPath}, model: ${config.embedding.model || "text-embedding-3-small"})`
+      `memory-lancedb-revised@${pluginVersion}: plugin registered (db: ${resolvedDbPath}, model: ${config.embedding.model || "text-embedding-3-small"})`
     );
 
     // ========================================================================
@@ -414,7 +414,7 @@ const memoryLanceDBProPlugin = {
         migrator,
         embedder,
       }),
-      { commands: ["memory-pro"] }
+      { commands: ["memory-revised"] }
     );
 
     // ========================================================================
@@ -488,7 +488,7 @@ const memoryLanceDBProPlugin = {
             : "";
 
           api.logger.info?.(
-            `memory-lancedb-pro: injecting context for agent ${agentId} ` +
+            `memory-lancedb-revised: injecting context for agent ${agentId} ` +
             `(critical=${criticalEntries.length}, recalled=${results.length}, static=${staticContext ? 'yes' : 'no'})`
           );
 
@@ -496,7 +496,7 @@ const memoryLanceDBProPlugin = {
             prependContext: [staticContext, criticalContext, recalledContext].filter(Boolean).join("\n\n"),
           };
         } catch (err) {
-          api.logger.warn(`memory-lancedb-pro: recall failed: ${String(err)}`);
+          api.logger.warn(`memory-lancedb-revised: recall failed: ${String(err)}`);
         }
       });
     }
@@ -581,11 +581,11 @@ const memoryLanceDBProPlugin = {
 
           if (stored > 0) {
             api.logger.info(
-              `memory-lancedb-pro: auto-captured ${stored} memories for agent ${agentId} in scope ${defaultScope}`
+              `memory-lancedb-revised: auto-captured ${stored} memories for agent ${agentId} in scope ${defaultScope}`
             );
           }
         } catch (err) {
-          api.logger.warn(`memory-lancedb-pro: capture failed: ${String(err)}`);
+          api.logger.warn(`memory-lancedb-revised: capture failed: ${String(err)}`);
         }
       });
     }
@@ -720,9 +720,9 @@ const memoryLanceDBProPlugin = {
           }
         }
 
-        api.logger.info(`memory-lancedb-pro: backup completed (${allMemories.length} entries → ${backupFile})`);
+        api.logger.info(`memory-lancedb-revised: backup completed (${allMemories.length} entries → ${backupFile})`);
       } catch (err) {
-        api.logger.warn(`memory-lancedb-pro: backup failed: ${String(err)}`);
+        api.logger.warn(`memory-lancedb-revised: backup failed: ${String(err)}`);
       }
     }
 
@@ -731,7 +731,7 @@ const memoryLanceDBProPlugin = {
     // ========================================================================
 
     api.registerService({
-      id: "memory-lancedb-pro",
+      id: "memory-lancedb-revised",
       start: async () => {
         try {
           // Test components
@@ -739,7 +739,7 @@ const memoryLanceDBProPlugin = {
           const retrievalTest = await retriever.test();
 
           api.logger.info(
-            `memory-lancedb-pro: initialized successfully ` +
+            `memory-lancedb-revised: initialized successfully ` +
             `(embedding: ${embedTest.success ? 'OK' : 'FAIL'}, ` +
             `retrieval: ${retrievalTest.success ? 'OK' : 'FAIL'}, ` +
             `mode: ${retrievalTest.mode}, ` +
@@ -747,17 +747,17 @@ const memoryLanceDBProPlugin = {
           );
 
           if (!embedTest.success) {
-            api.logger.warn(`memory-lancedb-pro: embedding test failed: ${embedTest.error}`);
+            api.logger.warn(`memory-lancedb-revised: embedding test failed: ${embedTest.error}`);
           }
           if (!retrievalTest.success) {
-            api.logger.warn(`memory-lancedb-pro: retrieval test failed: ${retrievalTest.error}`);
+            api.logger.warn(`memory-lancedb-revised: retrieval test failed: ${retrievalTest.error}`);
           }
 
           // Run initial backup after a short delay, then schedule daily
           setTimeout(() => runBackup(), 60_000); // 1 min after start
           backupTimer = setInterval(() => runBackup(), BACKUP_INTERVAL_MS);
         } catch (error) {
-          api.logger.warn(`memory-lancedb-pro: startup test failed: ${String(error)}`);
+          api.logger.warn(`memory-lancedb-revised: startup test failed: ${String(error)}`);
         }
       },
       stop: () => {
@@ -765,7 +765,7 @@ const memoryLanceDBProPlugin = {
           clearInterval(backupTimer);
           backupTimer = null;
         }
-        api.logger.info("memory-lancedb-pro: stopped");
+        api.logger.info("memory-lancedb-revised: stopped");
       },
     });
   },
@@ -774,7 +774,7 @@ const memoryLanceDBProPlugin = {
 
 function parsePluginConfig(value: unknown): PluginConfig {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
-      throw new Error("memory-lancedb-pro config required");
+      throw new Error("memory-lancedb-revised config required");
     }
     const cfg = value as Record<string, unknown>;
 

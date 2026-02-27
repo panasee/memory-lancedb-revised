@@ -57,8 +57,8 @@ function formatJson(obj: any): string {
 
 export function registerMemoryCLI(program: Command, context: CLIContext): void {
   const memory = program
-    .command("memory-pro")
-    .description("Enhanced memory management commands (LanceDB Pro)");
+    .command("memory-revised")
+    .description("Enhanced memory management commands (LanceDB Revised)");
 
   // Version
   memory

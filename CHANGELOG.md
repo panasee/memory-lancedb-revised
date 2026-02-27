@@ -6,7 +6,7 @@
 
 ## 1.0.3
 
-- Fix: `memory-pro reembed` no longer crashes (missing `clampInt` helper).
+- Fix: `memory-revised reembed` no longer crashes (missing `clampInt` helper).
 
 ## 1.0.2
 
@@ -15,7 +15,7 @@
 
 ## 1.0.1
 
-- Fix: CLI command namespace updated to `memory-pro`.
+- Fix: CLI command namespace updated to `memory-revised`.
 
 ## 1.0.0
 

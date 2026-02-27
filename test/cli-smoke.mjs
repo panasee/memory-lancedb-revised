@@ -37,7 +37,7 @@ async function createSourceDb(sourceDbPath) {
 }
 
 async function runCliSmoke() {
-  const workDir = mkdtempSync(path.join(tmpdir(), "memory-lancedb-pro-smoke-"));
+  const workDir = mkdtempSync(path.join(tmpdir(), "memory-lancedb-revised-smoke-"));
   const sourceDbPath = path.join(workDir, "source-db");
 
   await createSourceDb(sourceDbPath);
@@ -57,17 +57,17 @@ async function runCliSmoke() {
     embedder: {},
   };
 
-  // Register commands under `memory-pro`
+  // Register commands under `memory-revised`
   createMemoryCLI(context)({ program });
 
   // 1) version command should not throw
-  await program.parseAsync(["node", "openclaw", "memory-pro", "version"]);
+  await program.parseAsync(["node", "openclaw", "memory-revised", "version"]);
 
   // 2) reembed dry-run should not crash (regression test for clampInt)
   await program.parseAsync([
     "node",
     "openclaw",
-    "memory-pro",
+    "memory-revised",
     "reembed",
     "--source-db",
     sourceDbPath,

@@ -1,6 +1,6 @@
 {
-  "id": "memory-lancedb-pro",
-  "name": "Memory (LanceDB Pro)",
+  "id": "memory-lancedb-revised",
+  "name": "Memory (LanceDB Revised)",
   "description": "Enhanced LanceDB-backed long-term memory with hybrid retrieval, multi-scope isolation, and management CLI",
   "version": "1.0.4",
   "kind": "memory",
@@ -290,7 +290,7 @@
     },
     "dbPath": {
       "label": "Database Path",
-      "placeholder": "~/.openclaw/memory/lancedb-pro",
+      "placeholder": "~/.openclaw/memory/lancedb-revised",
       "help": "Directory path for the LanceDB database files",
       "advanced": true
     },
