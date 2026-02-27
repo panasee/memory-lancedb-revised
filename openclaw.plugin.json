@@ -2,7 +2,7 @@
   "id": "memory-lancedb-revised",
   "name": "Memory (LanceDB Revised)",
   "description": "Enhanced LanceDB-backed long-term memory with hybrid retrieval, multi-scope isolation, and management CLI",
-  "version": "1.0.4",
+  "version": "1.0.8",
   "kind": "memory",
   "configSchema": {
     "type": "object",

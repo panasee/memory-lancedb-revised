@@ -32,6 +32,31 @@ const FORCE_RETRIEVE_PATTERNS = [
   /(你记得|之前|上次|以前|还记得|提到过|说过)/i,
 ];
 
+/**
+ * Normalize the raw prompt before applying skip/force rules.
+ *
+ * OpenClaw may wrap cron prompts like:
+ *   "[cron:<jobId> <jobName>] run ..."
+ *
+ * Strip such prefixes so command-style prompts are properly detected and
+ * auto-recall injection can be skipped.
+ */
+function normalizeQuery(query: string): string {
+  let normalized = query.trim();
+
+  normalized = normalized.replace(/^\[cron:[^\]]+\]\s*/i, "");
+
+  if (/^Conversation info \(untrusted metadata\):/i.test(normalized)) {
+    normalized = normalized.replace(/^Conversation info \(untrusted metadata\):\s*/i, "");
+    const parts = normalized.split(/\n\s*\n/, 2);
+    if (parts.length === 2) {
+      normalized = parts[1];
+    }
+  }
+
+  return normalized.trim();
+}
+
 // Queries likely involving risky operations (filesystem/system/security-sensitive)
 const RISK_PATTERNS = [
   /\b(rm\s+-rf|delete|remove|wipe|chmod|chown|sudo|shell|bash|script|exec|command|deploy|migration?)\b/i,
@@ -44,7 +69,7 @@ const RISK_PATTERNS = [
  * Returns true if retrieval should be skipped.
  */
 export function shouldSkipRetrieval(query: string): boolean {
-  const trimmed = query.trim();
+  const trimmed = normalizeQuery(query);
 
   // Force retrieve if query has memory-related intent (checked FIRST,
   // before length check, so short CJK queries like "你记得吗" aren't skipped)
