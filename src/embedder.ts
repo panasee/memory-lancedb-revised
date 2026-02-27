@@ -111,6 +111,9 @@ const EMBEDDING_DIMENSIONS: Record<string, number> = {
   // Jina v5
   "jina-embeddings-v5-text-small": 1024,
   "jina-embeddings-v5-text-nano": 768,
+
+  // Qwen embedding (validated against SiliconFlow endpoint)
+  "Qwen/Qwen3-Embedding-8B": 4096,
 };
 
 // ============================================================================
