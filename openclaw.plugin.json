@@ -308,6 +308,43 @@
             }
           }
         }
+      },
+      "answerCapture": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Capture distilled Q/A pairs from user+assistant turns without enabling full assistant capture"
+          },
+          "maxPairs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "default": 1,
+            "description": "Maximum Q/A pairs to store per turn"
+          },
+          "minQuestionChars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 6,
+            "description": "Minimum question length to qualify for Q/A distillation"
+          },
+          "minAnswerChars": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 2000,
+            "default": 80,
+            "description": "Minimum assistant answer length to qualify for Q/A distillation"
+          },
+          "requireSignals": {
+            "type": "boolean",
+            "default": true,
+            "description": "Require answer text to contain conclusion/action signals before storing"
+          }
+        }
       }
     },
     "required": [
@@ -508,6 +545,31 @@
     "scenarioConstraints.scenarios": {
       "label": "Scenario Definitions",
       "help": "Scenario keyword-to-markdown mapping for contextual rule injection",
+      "advanced": true
+    },
+    "answerCapture.enabled": {
+      "label": "Answer Distillation Capture",
+      "help": "Store compact Q/A memories from each turn even when captureAssistant is disabled",
+      "advanced": true
+    },
+    "answerCapture.maxPairs": {
+      "label": "Max Q/A Pairs Per Turn",
+      "help": "Upper bound for distilled Q/A memories stored per turn",
+      "advanced": true
+    },
+    "answerCapture.minQuestionChars": {
+      "label": "Min Question Chars",
+      "help": "Minimum user question length for distillation",
+      "advanced": true
+    },
+    "answerCapture.minAnswerChars": {
+      "label": "Min Answer Chars",
+      "help": "Minimum assistant answer length for distillation",
+      "advanced": true
+    },
+    "answerCapture.requireSignals": {
+      "label": "Require Answer Signals",
+      "help": "Only store answers that contain conclusion/action signals",
       "advanced": true
     }
   }

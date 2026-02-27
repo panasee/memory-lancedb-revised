@@ -146,6 +146,22 @@ export class MemoryScopeManager implements ScopeManager {
       return agentScope;
     }
 
+    // If explicit access is configured, prefer task scopes (custom/project/user)
+    // so multiple agents can collaborate in shared domain scopes.
+    const explicitAccess = this.config.agentAccess[agentId];
+    if (Array.isArray(explicitAccess) && explicitAccess.length > 0) {
+      const preferred = explicitAccess.find(
+        (s) => s.startsWith("custom:") || s.startsWith("project:") || s.startsWith("user:")
+      );
+      if (preferred) {
+        return preferred;
+      }
+      if (explicitAccess.includes("global")) {
+        return "global";
+      }
+      return explicitAccess[0];
+    }
+
     return this.config.default;
   }
 

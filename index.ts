@@ -38,6 +38,13 @@ interface PluginConfig {
   autoCapture?: boolean;
   autoRecall?: boolean;
   captureAssistant?: boolean;
+  answerCapture?: {
+    enabled?: boolean;
+    maxPairs?: number;
+    minQuestionChars?: number;
+    minAnswerChars?: number;
+    requireSignals?: boolean;
+  };
   retrieval?: {
     mode?: "hybrid" | "vector";
     vectorWeight?: number;
@@ -181,6 +188,43 @@ export function detectCategory(text: string): "preference" | "fact" | "decision"
     return "fact";
   }
   return "other";
+}
+
+function extractTextBlocks(content: unknown): string[] {
+  if (typeof content === "string") return [content];
+  if (!Array.isArray(content)) return [];
+  const out: string[] = [];
+  for (const block of content) {
+    if (
+      block &&
+      typeof block === "object" &&
+      "type" in block &&
+      (block as Record<string, unknown>).type === "text" &&
+      "text" in block &&
+      typeof (block as Record<string, unknown>).text === "string"
+    ) {
+      out.push((block as Record<string, unknown>).text as string);
+    }
+  }
+  return out;
+}
+
+function sanitizeForMemory(text: string, maxChars = 700): string {
+  return text
+    .replace(/<relevant-memories>[\s\S]*?<\/relevant-memories>/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxChars);
+}
+
+function isAnswerMemoryCandidate(text: string, minChars: number, requireSignals: boolean): boolean {
+  const cleaned = sanitizeForMemory(text, 1200);
+  if (cleaned.length < minChars) return false;
+  if (cleaned.startsWith("/")) return false;
+  if (!requireSignals) return true;
+  return /结论|建议|最终|方案|步骤|修复|原因|解决|推荐|因此|summary|conclusion|recommended|steps|fix|root cause|run |set |use /i.test(cleaned);
 }
 
 function sanitizeForContext(text: string): string {
@@ -572,46 +616,34 @@ const memoryLanceDBProPlugin = {
 
           // Extract text content from messages
           const texts: string[] = [];
+          const userTexts: string[] = [];
+          const assistantTexts: string[] = [];
+          const captureAssistant = config.captureAssistant === true;
+
           for (const msg of event.messages) {
             if (!msg || typeof msg !== "object") {
               continue;
             }
             const msgObj = msg as Record<string, unknown>;
-
             const role = msgObj.role;
-            const captureAssistant = config.captureAssistant === true;
-            if (role !== "user" && !(captureAssistant && role === "assistant")) {
+            const blockTexts = extractTextBlocks(msgObj.content);
+
+            if (role === "user") {
+              userTexts.push(...blockTexts);
+              texts.push(...blockTexts);
               continue;
             }
 
-            const content = msgObj.content;
-
-            if (typeof content === "string") {
-              texts.push(content);
-              continue;
-            }
-
-            if (Array.isArray(content)) {
-              for (const block of content) {
-                if (
-                  block &&
-                  typeof block === "object" &&
-                  "type" in block &&
-                  (block as Record<string, unknown>).type === "text" &&
-                  "text" in block &&
-                  typeof (block as Record<string, unknown>).text === "string"
-                ) {
-                  texts.push((block as Record<string, unknown>).text as string);
-                }
+            if (role === "assistant") {
+              assistantTexts.push(...blockTexts);
+              if (captureAssistant) {
+                texts.push(...blockTexts);
               }
             }
           }
 
           // Filter for capturable content
           const toCapture = texts.filter((text) => text && shouldCapture(text));
-          if (toCapture.length === 0) {
-            return;
-          }
 
           // Store each capturable piece (limit to 3 per conversation)
           let stored = 0;
@@ -636,9 +668,49 @@ const memoryLanceDBProPlugin = {
             stored++;
           }
 
-          if (stored > 0) {
+          // Optional Q/A distillation: keep answer memories even when captureAssistant=false
+          const answerCaptureEnabled = config.answerCapture?.enabled === true;
+          let storedQa = 0;
+          if (answerCaptureEnabled && userTexts.length > 0 && assistantTexts.length > 0) {
+            const maxPairs = Math.max(1, Math.min(3, config.answerCapture?.maxPairs ?? 1));
+            const minQuestionChars = Math.max(4, config.answerCapture?.minQuestionChars ?? 6);
+            const minAnswerChars = Math.max(20, config.answerCapture?.minAnswerChars ?? 80);
+            const requireSignals = config.answerCapture?.requireSignals !== false;
+
+            const qCandidates = userTexts
+              .map((q) => sanitizeForMemory(q, 320))
+              .filter((q) => q.length >= minQuestionChars);
+            const aCandidates = assistantTexts
+              .filter((a) => isAnswerMemoryCandidate(a, minAnswerChars, requireSignals))
+              .map((a) => sanitizeForMemory(a, 520));
+
+            const pairCount = Math.min(maxPairs, qCandidates.length, aCandidates.length);
+            for (let i = 0; i < pairCount; i++) {
+              const q = qCandidates[qCandidates.length - 1 - i];
+              const a = aCandidates[aCandidates.length - 1 - i];
+              const qaText = `Q: ${q}\nA: ${a}`.slice(0, 950);
+
+              const qaVector = await embedder.embedPassage(qaText);
+              const existingQa = await store.vectorSearch(qaVector, 1, 0.1, [defaultScope]);
+              if (existingQa.length > 0 && existingQa[0].score > 0.94) {
+                continue;
+              }
+
+              await store.store({
+                text: qaText,
+                vector: qaVector,
+                importance: 0.82,
+                category: "fact",
+                scope: defaultScope,
+                metadata: JSON.stringify({ type: "qa-pair", source: "auto-answer-capture" }),
+              });
+              storedQa++;
+            }
+          }
+
+          if (stored > 0 || storedQa > 0) {
             api.logger.info(
-              `memory-lancedb-revised: auto-captured ${stored} memories for agent ${agentId} in scope ${defaultScope}`
+              `memory-lancedb-revised: auto-captured ${stored} trigger memories + ${storedQa} qa memories for agent ${agentId} in scope ${defaultScope}`
             );
           }
         } catch (err) {
@@ -881,6 +953,17 @@ function parsePluginConfig(value: unknown): PluginConfig {
       autoCapture: cfg.autoCapture !== false,
       autoRecall: cfg.autoRecall !== false,
       captureAssistant: cfg.captureAssistant === true,
+      answerCapture: typeof cfg.answerCapture === "object" && cfg.answerCapture !== null
+        ? {
+            enabled: (cfg.answerCapture as Record<string, unknown>).enabled === true,
+            maxPairs: parsePositiveInt((cfg.answerCapture as Record<string, unknown>).maxPairs),
+            minQuestionChars: parsePositiveInt((cfg.answerCapture as Record<string, unknown>).minQuestionChars),
+            minAnswerChars: parsePositiveInt((cfg.answerCapture as Record<string, unknown>).minAnswerChars),
+            requireSignals: typeof (cfg.answerCapture as Record<string, unknown>).requireSignals === "boolean"
+              ? (cfg.answerCapture as Record<string, unknown>).requireSignals as boolean
+              : undefined,
+          }
+        : undefined,
       retrieval: retrievalCfg as any,
       scopes: typeof cfg.scopes === "object" && cfg.scopes !== null ? cfg.scopes as any : undefined,
       enableManagementTools: cfg.enableManagementTools === true,
