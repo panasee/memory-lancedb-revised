@@ -791,6 +791,22 @@ function parsePluginConfig(value: unknown): PluginConfig {
       throw new Error("embedding.apiKey is required (set directly or via OPENAI_API_KEY env var)");
     }
 
+    const retrievalCfg = (typeof cfg.retrieval === "object" && cfg.retrieval !== null)
+      ? { ...(cfg.retrieval as Record<string, unknown>) }
+      : undefined;
+
+    if (retrievalCfg) {
+      if (typeof retrievalCfg.rerankApiKey === "string") {
+        retrievalCfg.rerankApiKey = resolveEnvVars(retrievalCfg.rerankApiKey);
+      }
+      if (typeof retrievalCfg.rerankEndpoint === "string") {
+        retrievalCfg.rerankEndpoint = resolveEnvVars(retrievalCfg.rerankEndpoint);
+      }
+      if (typeof retrievalCfg.rerankModel === "string") {
+        retrievalCfg.rerankModel = resolveEnvVars(retrievalCfg.rerankModel);
+      }
+    }
+
     return {
       embedding: {
         provider: "openai-compatible",
@@ -808,7 +824,7 @@ function parsePluginConfig(value: unknown): PluginConfig {
       autoCapture: cfg.autoCapture !== false,
       autoRecall: cfg.autoRecall !== false,
       captureAssistant: cfg.captureAssistant === true,
-      retrieval: typeof cfg.retrieval === "object" && cfg.retrieval !== null ? cfg.retrieval as any : undefined,
+      retrieval: retrievalCfg as any,
       scopes: typeof cfg.scopes === "object" && cfg.scopes !== null ? cfg.scopes as any : undefined,
       enableManagementTools: cfg.enableManagementTools === true,
       sessionMemory: typeof cfg.sessionMemory === "object" && cfg.sessionMemory !== null
